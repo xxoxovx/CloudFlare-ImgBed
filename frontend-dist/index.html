@@ -14,35 +14,54 @@
         .catch(() => null);
       window.__siteEntryBootstrap = { config: cached.userConfig, configReady };
     })();</script><style>
-    /* 现代新拟态配色与核心变量 */
+    /* 全局壁纸与磨砂拟态变量 */
     :root {
-      --neu-bg: #e6ebf2;
-      --neu-light: #ffffff;
-      --neu-dark: #b8c4d6;
-      --neu-text: #414d63;
-      --neu-accent: #3b82f6;
+      --bg-img: url('https://picui.ogmua.cn/s1/2026/10/29/6ae2ea5034071.webp');
+      --neu-card-bg: rgba(255, 255, 255, 0.45);
+      --neu-card-border: rgba(255, 255, 255, 0.55);
+      --neu-card-shadow: 12px 12px 28px rgba(31, 38, 135, 0.18), -8px -8px 22px rgba(255, 255, 255, 0.75);
+      
+      --neu-inner-bg: rgba(255, 255, 255, 0.28);
+      --neu-inner-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.1), inset -4px -4px 8px rgba(255, 255, 255, 0.75);
+      
+      --neu-btn-bg: rgba(255, 255, 255, 0.6);
+      --neu-btn-shadow: 5px 5px 12px rgba(31, 38, 135, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.9);
+      
+      --text-main: #24292f;
+      --accent: #2563eb;
     }
 
     html.dark {
-      --neu-bg: #1c2029;
-      --neu-light: #262c38;
-      --neu-dark: #12151c;
-      --neu-text: #c2ccde;
-      --neu-accent: #60a5fa;
+      --neu-card-bg: rgba(18, 22, 31, 0.55);
+      --neu-card-border: rgba(255, 255, 255, 0.08);
+      --neu-card-shadow: 12px 12px 28px rgba(0, 0, 0, 0.45), -6px -6px 20px rgba(255, 255, 255, 0.04);
+      
+      --neu-inner-bg: rgba(10, 13, 20, 0.45);
+      --neu-inner-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.5), inset -3px -3px 6px rgba(255, 255, 255, 0.05);
+      
+      --neu-btn-bg: rgba(30, 37, 51, 0.65);
+      --neu-btn-shadow: 5px 5px 12px rgba(0, 0, 0, 0.35), -3px -3px 8px rgba(255, 255, 255, 0.05);
+      
+      --text-main: #f0f6fc;
+      --accent: #60a5fa;
     }
 
-    /* 页面基底与预加载背景 */
-    html, body, html.entry-loading {
-      background-color: var(--neu-bg) !important;
-      color: var(--neu-text) !important;
+    /* 高清背景图与定焦平铺 */
+    html, body {
+      min-height: 100vh;
+      background: var(--bg-img) no-repeat center center fixed !important;
+      background-size: cover !important;
+      color: var(--text-main) !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    html.entry-loading.dark {
-      background-color: var(--neu-bg) !important;
-      color-scheme: dark;
+    /* 预加载遮罩与平滑过渡 */
+    html.entry-loading {
+      background: var(--bg-img) no-repeat center center fixed !important;
+      background-size: cover !important;
     }
 
-    /* 卡片与浮层：经典外凸拟态阴影 */
+    /* 主卡片与容器：毛玻璃结合双向拟态外凸光影 */
     .card, 
     .v-card, 
     .el-card, 
@@ -50,63 +69,62 @@
     .upload-card, 
     div[class*="card"],
     div[class*="panel"],
+    div[class*="main"]:not(#app),
     div[class*="container"]:not(#app) {
-      background: var(--neu-bg) !important;
-      border: 1px solid rgba(255, 255, 255, 0.4) !important;
-      border-radius: 20px !important;
-      box-shadow: 8px 8px 18px var(--neu-dark), -8px -8px 18px var(--neu-light) !important;
+      background: var(--neu-card-bg) !important;
+      backdrop-filter: blur(20px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+      border: 1px solid var(--neu-card-border) !important;
+      border-radius: 24px !important;
+      box-shadow: var(--neu-card-shadow) !important;
     }
 
-    html.dark .card,
-    html.dark .v-card,
-    html.dark .el-card,
-    html.dark .ant-card,
-    html.dark .upload-card,
-    html.dark div[class*="card"],
-    html.dark div[class*="panel"],
-    html.dark div[class*="container"]:not(#app) {
-      border: 1px solid rgba(255, 255, 255, 0.05) !important;
-      box-shadow: 6px 6px 16px var(--neu-dark), -6px -6px 16px var(--neu-light) !important;
-    }
-
-    /* 拖拽上传区与输入框：内嵌凹陷阴影 (Inset) */
+    /* 拖拽上传区域与各类输入框：深层凹陷拟态 (Inset) */
     .dropzone,
     .el-upload-dragger,
     div[class*="dropzone"],
     div[class*="upload-box"],
+    div[class*="drop-area"],
     input[type="text"],
     input[type="password"],
     input[type="search"],
     textarea,
     .el-input__inner,
     .ant-input {
-      background: var(--neu-bg) !important;
-      border: none !important;
-      border-radius: 14px !important;
-      box-shadow: inset 4px 4px 8px var(--neu-dark), inset -4px -4px 8px var(--neu-light) !important;
-      color: var(--neu-text) !important;
+      background: var(--neu-inner-bg) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      border-radius: 16px !important;
+      box-shadow: var(--neu-inner-shadow) !important;
+      color: var(--text-main) !important;
+      outline: none !important;
     }
 
-    /* 按钮：外凸物理按键与按压触感 */
+    /* 物理机械按键：实体凸起与按压回弹手感 */
     button,
     .btn,
     .el-button,
     .ant-btn,
     div[role="button"]:not(.entry-loader-duck) {
-      background: var(--neu-bg) !important;
-      border: none !important;
+      background: var(--neu-btn-bg) !important;
+      backdrop-filter: blur(14px) !important;
+      -webkit-backdrop-filter: blur(14px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.4) !important;
       border-radius: 14px !important;
-      color: var(--neu-accent) !important;
+      color: var(--accent) !important;
       font-weight: 600 !important;
-      box-shadow: 4px 4px 10px var(--neu-dark), -4px -4px 10px var(--neu-light) !important;
-      transition: all 0.15s ease-in-out !important;
+      box-shadow: var(--neu-btn-shadow) !important;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      cursor: pointer !important;
     }
 
     button:hover,
     .btn:hover,
     .el-button:hover,
     .ant-btn:hover {
-      box-shadow: 6px 6px 12px var(--neu-dark), -6px -6px 12px var(--neu-light) !important;
+      transform: translateY(-2px);
+      box-shadow: 7px 7px 16px rgba(31, 38, 135, 0.2), -5px -5px 12px rgba(255, 255, 255, 1) !important;
     }
 
     button:active,
@@ -114,7 +132,16 @@
     .el-button:active,
     .ant-btn:active,
     div[role="button"]:not(.entry-loader-duck):active {
-      box-shadow: inset 3px 3px 6px var(--neu-dark), inset -3px -3px 6px var(--neu-light) !important;
-      transform: scale(0.98);
+      transform: scale(0.97) !important;
+      box-shadow: var(--neu-inner-shadow) !important;
+    }
+
+    /* 文字对比度与光晕保障 */
+    h1, h2, h3, h4, .title {
+      color: var(--text-main) !important;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.4);
+    }
+    html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark .title {
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
     }
   </style><link rel="preload" href="/entry/entry-loader.c76da827.js" as="script"><link rel="icon" href="/static/media/logo.png"><link rel="apple-touch-icon" href="/static/media/logo.png"><link rel="mask-icon" href="/static/media/logo.png" color="#f4b400"><link rel="preload" href="/fonts/Pacifico-Regular.dc63ac94.woff2" as="font" type="font/woff2" crossorigin><meta name="description" content="Sanyue ImgHub - A modern file hosting platform"><meta name="keywords" content="Sanyue, ImgHub, file hosting, image hosting, cloud storage"><meta name="author" content="SanyueQi"><title>Sanyue ImgHub</title><link rel="stylesheet" href="/entry/entry-loader.f41470d3.css"><link rel="stylesheet" href="/css/chunk-vendors.c8a4c1c7.css"><link rel="stylesheet" href="/css/app.15960487.css"><script data-cfasync="false" defer="defer" src="/js/chunk-vendors.a8ef1239.js"></script><script data-cfasync="false" defer="defer" src="/js/app.717a0725.js"></script></head><body><noscript><style>#entry-loader { display: none; }</style><strong>We're sorry but sanyue_imghub doesn't work properly without JavaScript enabled. Please enable it to continue.</strong></noscript><div id="entry-loader" role="status" aria-live="polite" aria-label="Loading"><div class="entry-loader-content"><div class="entry-loader-name" aria-hidden="true"></div><div class="entry-loader-progress" aria-hidden="true"><div class="entry-loader-duck-travel"><div class="entry-loader-duck"><svg class="entry-duck-head" viewBox="0 0 56 48" fill="none"><path d="M25 9Q21 2 26 3Q29 3 29 8M29 8Q34 2 36 6" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><ellipse cx="28" cy="26" rx="22" ry="19" fill="currentColor"/><path d="M15 17Q18 12 24 12" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="0.22"/><ellipse cx="19.5" cy="25" rx="2" ry="2.7" fill="var(--entry-duck-eye)"/><ellipse cx="36.5" cy="25" rx="2" ry="2.7" fill="var(--entry-duck-eye)"/><g fill="#fff" opacity="0.9"><circle cx="19" cy="24" r="0.7"/><circle cx="36" cy="24" r="0.7"/></g><g fill="var(--entry-duck-cheek)" opacity="0.65"><ellipse cx="14.5" cy="31" rx="3.8" ry="2.4"/><ellipse cx="41.5" cy="31" rx="3.8" ry="2.4"/></g><ellipse cx="28" cy="33" rx="7.5" ry="4.3" fill="var(--entry-duck-beak)"/><path d="M23 33Q28 35 33 33" stroke="var(--entry-duck-mouth)" stroke-width="1.2" stroke-linecap="round"/></svg> <svg class="entry-duck-ripples" viewBox="0 0 56 48" fill="none" stroke="var(--entry-accent)" stroke-width="1" stroke-linecap="round"><path d="M5 46H12M22 47H34M44 46H51"/></svg></div><div class="entry-loader-bar"></div></div><div class="entry-loader-track"></div></div></div></div><div id="app" inert></div><script data-cfasync="false" src="/entry/entry-loader.c76da827.js"></script></body></html>
