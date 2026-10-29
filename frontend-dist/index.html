@@ -12,110 +12,99 @@
         .then(response => response.ok ? response.json() : null)
         .catch(() => null);
       window.__siteEntryBootstrap = { config: cached.userConfig, configReady };
-    })();</script><script data-cfasync="false">
-    /* 拦截动态特效并强制锁定背景图 */
-    (() => {
-      const isEffectNode = (node) => {
-        if (!node || node.nodeType !== 1) return false;
-        const id = node.id || '';
-        const cls = typeof node.className === 'string' ? node.className : '';
-        const isTargetName = /balloon|bubble|trail|cursor|particle/i.test(id + ' ' + cls);
-        const isCoverCanvas = node.tagName === 'CANVAS' && (
-          node.style.position === 'fixed' || 
-          node.style.position === 'absolute' || 
-          node.parentNode === document.body
-        );
-        return isTargetName || isCoverCanvas;
-      };
-
-      const purge = () => {
-        document.querySelectorAll('canvas, [class*="balloon"], [class*="bubble"], [class*="trail"], [class*="particle"], [class*="cursor"]').forEach(el => {
-          if (isEffectNode(el)) el.remove();
-        });
-      };
-
-      document.addEventListener('DOMContentLoaded', purge);
-      window.addEventListener('load', purge);
-      const observer = new MutationObserver((mutations) => {
-        for (const m of mutations) {
-          for (const node of m.addedNodes) {
-            if (isEffectNode(node)) node.remove();
-          }
-        }
-      });
-      observer.observe(document.documentElement, { childList: true, subtree: true });
-    })();
-  </script><style>
-    /* 1. 核心配色与新拟态参数 */
+    })();</script><style>
+    /* ================= 1. 变量定义 ================= */
     :root {
-      --bg-img: url('https://picui.ogmua.cn/s1/2026/10/29/6ae2ea5034071.webp');
-      --neu-card-bg: rgba(255, 255, 255, 0.45);
-      --neu-card-border: rgba(255, 255, 255, 0.65);
-      --neu-card-shadow: 10px 10px 26px rgba(31, 38, 135, 0.16), -6px -6px 18px rgba(255, 255, 255, 0.85);
-      
-      --neu-inner-bg: rgba(255, 255, 255, 0.32);
+      --target-bg: url('https://picui.ogmua.cn/s1/2026/10/29/6ae2ea5034071.webp');
+      --neu-card-bg: rgba(255, 255, 255, 0.42);
+      --neu-card-border: rgba(255, 255, 255, 0.6);
+      --neu-card-shadow: 12px 12px 28px rgba(31, 38, 135, 0.16), -8px -8px 22px rgba(255, 255, 255, 0.85);
+      --neu-inner-bg: rgba(255, 255, 255, 0.28);
       --neu-inner-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.08), inset -3px -3px 6px rgba(255, 255, 255, 0.85);
-      
       --neu-btn-bg: rgba(255, 255, 255, 0.62);
       --neu-btn-shadow: 4px 4px 10px rgba(31, 38, 135, 0.14), -3px -3px 8px rgba(255, 255, 255, 0.9);
-      
       --text-main: #24292f;
       --accent: #2563eb;
     }
 
     html.dark {
-      --neu-card-bg: rgba(20, 24, 34, 0.6);
+      --neu-card-bg: rgba(20, 24, 34, 0.58);
       --neu-card-border: rgba(255, 255, 255, 0.08);
       --neu-card-shadow: 12px 12px 28px rgba(0, 0, 0, 0.5), -5px -5px 16px rgba(255, 255, 255, 0.04);
-      
       --neu-inner-bg: rgba(12, 15, 22, 0.48);
       --neu-inner-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.55), inset -3px -3px 6px rgba(255, 255, 255, 0.05);
-      
       --neu-btn-bg: rgba(30, 36, 49, 0.7);
       --neu-btn-shadow: 4px 4px 10px rgba(0, 0, 0, 0.35), -3px -3px 8px rgba(255, 255, 255, 0.05);
-      
       --text-main: #f0f6fc;
       --accent: #60a5fa;
     }
 
-    /* 2. 独立全屏底层壁纸（使用 ::before 铺底，彻底防止被 JS 篡改覆盖） */
-    html::before {
-      content: "";
+    /* ================= 2. 彻底屏蔽全屏动效、气球与鼠标拖尾 ================= */
+    /* 屏蔽所有负责拖尾/粒子的全屏 canvas */
+    canvas,
+    body > canvas,
+    #canvas,
+    .canvas-container,
+    /* 屏蔽气球与拖尾相关元素 */
+    .balloon,
+    .balloons,
+    [class*="balloon"],
+    [class*="bubble"],
+    [id*="balloon"],
+    [id*="bubble"],
+    .cursor,
+    .cursor-trail,
+    .mouse-trail,
+    [class*="trail"],
+    [class*="cursor"],
+    [class*="particle"],
+    [id*="trail"],
+    [id*="particle"] {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    /* ================= 3. 强力置换背景图与穿透 Vue 遮罩 ================= */
+    /* 直接向整个视口铺设固定层，防止被 JS 修改 style 绕过 */
+    #custom-viewport-bg {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: var(--bg-img) no-repeat center center !important;
+      background: var(--target-bg) no-repeat center center fixed !important;
       background-size: cover !important;
-      z-index: -9999;
+      z-index: 0;
       pointer-events: none;
     }
 
-    html, body, html.entry-loading {
-      min-height: 100vh;
+    html, body, #app {
       background: transparent !important;
-      color: var(--text-main) !important;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
     }
 
-    /* 3. 彻底穿透 Vue 内部原生的独立遮罩图层与雪景图 */
-    #app,
-    .bg-container,
-    .wallpaper-container,
+    /* 穿透图床内置的背景层与雪景遮罩 */
+    .bg,
+    .background,
+    .bg-image,
+    .bg-wrapper,
+    [class*="background"],
+    [class*="wallpaper"],
     .el-container,
     .el-main,
     .layout,
     .admin-layout,
-    .system-config-container,
-    div[class*="background"],
-    div[class*="wallpaper"],
-    div[class*="layout"],
-    div[class*="main-content"] {
+    .system-config-container {
       background: transparent !important;
+      background-image: none !important;
     }
 
-    /* 4. 前台与后台卡片：磨砂新拟态 (凸起) */
+    /* ================= 4. 现代磨砂新拟态样式 ================= */
+    /* 主卡片、后台卡片、上传区容器 */
     .upload-container,
     .upload-card,
     .status-card,
@@ -135,7 +124,7 @@
       box-shadow: var(--neu-card-shadow) !important;
     }
 
-    /* 5. 后台侧边栏与导航 */
+    /* 侧边栏 */
     .el-aside,
     .sidebar,
     div[class*="aside"],
@@ -157,7 +146,7 @@
       color: var(--accent) !important;
     }
 
-    /* 6. 上传拖拽框、文本输入框 (内嵌 Inset) */
+    /* 拖拽框、文本输入框 (凹陷 Inset) */
     .dropzone,
     .el-upload-dragger,
     div[class*="drop-box"],
@@ -177,7 +166,7 @@
       outline: none !important;
     }
 
-    /* 7. 按钮：外凸按键与回弹触感 */
+    /* 操作按钮 (凸起与按压回弹) */
     button, .btn, .el-button, div[role="button"]:not(.entry-loader-duck) {
       background: var(--neu-btn-bg) !important;
       backdrop-filter: blur(14px) !important;
@@ -187,18 +176,10 @@
       color: var(--accent) !important;
       box-shadow: var(--neu-btn-shadow) !important;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      cursor: pointer !important;
     }
     button:active, .btn:active, .el-button:active, div[role="button"]:not(.entry-loader-duck):active {
       transform: scale(0.97) !important;
       box-shadow: var(--neu-inner-shadow) !important;
     }
-
-    /* 8. 彻底屏蔽气球与特效画布 */
-    .balloon, .balloons, [class*="balloon"], [class*="bubble"],
-    canvas[style*="fixed"], canvas[style*="absolute"], canvas#canvas, body > canvas,
-    .cursor, .cursor-trail, [class*="cursor"], [class*="trail"], [class*="particle"] {
-      display: none !important;
-      opacity: 0 !important;
-      pointer-events: none !important;
-    }
-  </style><link rel="preload" href="/entry/entry-loader.c76da827.js" as="script"><link rel="icon" href="/static/media/logo.png"><link rel="apple-touch-icon" href="/static/media/logo.png"><link rel="mask-icon" href="/static/media/logo.png" color="#f4b400"><link rel="preload" href="/fonts/Pacifico-Regular.dc63ac94.woff2" as="font" type="font/woff2" crossorigin><meta name="description" content="Sanyue ImgHub - A modern file hosting platform"><meta name="keywords" content="Sanyue, ImgHub, file hosting, image hosting, cloud storage"><meta name="author" content="SanyueQi"><title>Sanyue ImgHub</title><link rel="stylesheet" href="/entry/entry-loader.f41470d3.css"><link rel="stylesheet" href="/css/chunk-vendors.c8a4c1c7.css"><link rel="stylesheet" href="/css/app.15960487.css"><script data-cfasync="false" defer="defer" src="/js/chunk-vendors.a8ef1239.js"></script><script data-cfasync="false" defer="defer" src="/js/app.717a0725.js"></script></head><body><noscript><style>#entry-loader { display: none; }</style><strong>We're sorry but sanyue_imghub doesn't work properly without JavaScript enabled. Please enable it to continue.</strong></noscript><div id="entry-loader" role="status" aria-live="polite" aria-label="Loading"><div class="entry-loader-content"><div class="entry-loader-name" aria-hidden="true"></div><div class="entry-loader-progress" aria-hidden="true"><div class="entry-loader-duck-travel"><div class="entry-loader-duck"><svg class="entry-duck-head" viewBox="0 0 56 48" fill="none"><path d="M25 9Q21 2 26 3Q29 3 29 8M29 8Q34 2 36 6" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><ellipse cx="28" cy="26" rx="22" ry="19" fill="currentColor"/><path d="M15 17Q18 12 24 12" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="0.22"/><ellipse cx="19.5" cy="25" rx="2" ry="2.7" fill="var(--entry-duck-eye)"/><ellipse cx="36.5" cy="25" rx="2" ry="2.7" fill="var(--entry-duck-eye)"/><g fill="#fff" opacity="0.9"><circle cx="19" cy="24" r="0.7"/><circle cx="36" cy="24" r="0.7"/></g><g fill="var(--entry-duck-cheek)" opacity="0.65"><ellipse cx="14.5" cy="31" rx="3.8" ry="2.4"/><ellipse cx="41.5" cy="31" rx="3.8" ry="2.4"/></g><ellipse cx="28" cy="33" rx="7.5" ry="4.3" fill="var(--entry-duck-beak)"/><path d="M23 33Q28 35 33 33" stroke="var(--entry-duck-mouth)" stroke-width="1.2" stroke-linecap="round"/></svg> <svg class="entry-duck-ripples" viewBox="0 0 56 48" fill="none" stroke="var(--entry-accent)" stroke-width="1" stroke-linecap="round"><path d="M5 46H12M22 47H34M44 46H51"/></svg></div><div class="entry-loader-bar"></div></div><div class="entry-loader-track"></div></div></div></div><div id="app" inert></div><script data-cfasync="false" src="/entry/entry-loader.c76da827.js"></script></body></html>
+  </style><link rel="preload" href="/entry/entry-loader.c76da827.js" as="script"><link rel="icon" href="/static/media/logo.png"><link rel="apple-touch-icon" href="/static/media/logo.png"><link rel="mask-icon" href="/static/media/logo.png" color="#f4b400"><link rel="preload" href="/fonts/Pacifico-Regular.dc63ac94.woff2" as="font" type="font/woff2" crossorigin><meta name="description" content="Sanyue ImgHub - A modern file hosting platform"><meta name="keywords" content="Sanyue, ImgHub, file hosting, image hosting, cloud storage"><meta name="author" content="SanyueQi"><title>Sanyue ImgHub</title><link rel="stylesheet" href="/entry/entry-loader.f41470d3.css"><link rel="stylesheet" href="/css/chunk-vendors.c8a4c1c7.css"><link rel="stylesheet" href="/css/app.15960487.css"><script data-cfasync="false" defer="defer" src="/js/chunk-vendors.a8ef1239.js"></script><script data-cfasync="false" defer="defer" src="/js/app.717a0725.js"></script></head><body><div id="custom-viewport-bg"></div><noscript><style>#entry-loader { display: none; }</style><strong>We're sorry but sanyue_imghub doesn't work properly without JavaScript enabled. Please enable it to continue.</strong></noscript><div id="entry-loader" role="status" aria-live="polite" aria-label="Loading"><div class="entry-loader-content"><div class="entry-loader-name" aria-hidden="true"></div><div class="entry-loader-progress" aria-hidden="true"><div class="entry-loader-duck-travel"><div class="entry-loader-duck"><svg class="entry-duck-head" viewBox="0 0 56 48" fill="none"><path d="M25 9Q21 2 26 3Q29 3 29 8M29 8Q34 2 36 6" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><ellipse cx="28" cy="26" rx="22" ry="19" fill="currentColor"/><path d="M15 17Q18 12 24 12" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="0.22"/><ellipse cx="19.5" cy="25" rx="2" ry="2.7" fill="var(--entry-duck-eye)"/><ellipse cx="36.5" cy="25" rx="2" ry="2.7" fill="var(--entry-duck-eye)"/><g fill="#fff" opacity="0.9"><circle cx="19" cy="24" r="0.7"/><circle cx="36" cy="24" r="0.7"/></g><g fill="var(--entry-duck-cheek)" opacity="0.65"><ellipse cx="14.5" cy="31" rx="3.8" ry="2.4"/><ellipse cx="41.5" cy="31" rx="3.8" ry="2.4"/></g><ellipse cx="28" cy="33" rx="7.5" ry="4.3" fill="var(--entry-duck-beak)"/><path d="M23 33Q28 35 33 33" stroke="var(--entry-duck-mouth)" stroke-width="1.2" stroke-linecap="round"/></svg> <svg class="entry-duck-ripples" viewBox="0 0 56 48" fill="none" stroke="var(--entry-accent)" stroke-width="1" stroke-linecap="round"><path d="M5 46H12M22 47H34M44 46H51"/></svg></div><div class="entry-loader-bar"></div></div><div class="entry-loader-track"></div></div></div></div><div id="app" inert></div><script data-cfasync="false" src="/entry/entry-loader.c76da827.js"></script></body></html>
