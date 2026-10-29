@@ -8,31 +8,64 @@
         : matchMedia('(prefers-color-scheme: dark)').matches || hour >= 22 || hour < 6;
       root.classList.add('entry-loading');
       root.classList.toggle('dark', dark);
-      // 配置请求与应用资源并行，标题不必等主应用启动后才出现。
       const configReady = fetch('/api/userConfig', { credentials: 'same-origin' })
         .then(response => response.ok ? response.json() : null)
         .catch(() => null);
       window.__siteEntryBootstrap = { config: cached.userConfig, configReady };
-    })();</script><style>
-    /* 全局壁纸与磨砂拟态变量 */
+    })();</script><script data-cfasync="false">
+    /* 拦截并彻底移除气球与鼠标拖尾粒子 */
+    (() => {
+      const isEffectNode = (node) => {
+        if (!node || node.nodeType !== 1) return false;
+        const id = node.id || '';
+        const cls = typeof node.className === 'string' ? node.className : '';
+        const isTargetName = /balloon|bubble|trail|cursor|particle/i.test(id + ' ' + cls);
+        const isCoverCanvas = node.tagName === 'CANVAS' && (
+          node.style.position === 'fixed' || 
+          node.style.position === 'absolute' || 
+          node.parentNode === document.body
+        );
+        return isTargetName || isCoverCanvas;
+      };
+
+      const purge = () => {
+        document.querySelectorAll('canvas, [class*="balloon"], [class*="bubble"], [class*="trail"], [class*="particle"], [class*="cursor"]').forEach(el => {
+          if (isEffectNode(el)) el.remove();
+        });
+      };
+
+      document.addEventListener('DOMContentLoaded', purge);
+      window.addEventListener('load', purge);
+      const observer = new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          for (const node of m.addedNodes) {
+            if (isEffectNode(node)) {
+              node.remove();
+            }
+          }
+        }
+      });
+      observer.observe(document.documentElement, { childList: true, subtree: true });
+    })();
+  </script><style>
     :root {
       --bg-img: url('https://picui.ogmua.cn/s1/2026/10/29/6ae2ea5034071.webp');
-      --neu-card-bg: rgba(255, 255, 255, 0.45);
-      --neu-card-border: rgba(255, 255, 255, 0.55);
-      --neu-card-shadow: 12px 12px 28px rgba(31, 38, 135, 0.18), -8px -8px 22px rgba(255, 255, 255, 0.75);
+      --neu-card-bg: rgba(255, 255, 255, 0.42);
+      --neu-card-border: rgba(255, 255, 255, 0.6);
+      --neu-card-shadow: 12px 12px 28px rgba(31, 38, 135, 0.16), -8px -8px 22px rgba(255, 255, 255, 0.8);
       
       --neu-inner-bg: rgba(255, 255, 255, 0.28);
-      --neu-inner-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.1), inset -4px -4px 8px rgba(255, 255, 255, 0.75);
+      --neu-inner-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.08), inset -4px -4px 8px rgba(255, 255, 255, 0.8);
       
-      --neu-btn-bg: rgba(255, 255, 255, 0.6);
-      --neu-btn-shadow: 5px 5px 12px rgba(31, 38, 135, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.9);
+      --neu-btn-bg: rgba(255, 255, 255, 0.65);
+      --neu-btn-shadow: 4px 4px 12px rgba(31, 38, 135, 0.15), -4px -4px 10px rgba(255, 255, 255, 0.9);
       
       --text-main: #24292f;
       --accent: #2563eb;
     }
 
     html.dark {
-      --neu-card-bg: rgba(18, 22, 31, 0.55);
+      --neu-card-bg: rgba(18, 22, 31, 0.58);
       --neu-card-border: rgba(255, 255, 255, 0.08);
       --neu-card-shadow: 12px 12px 28px rgba(0, 0, 0, 0.45), -6px -6px 20px rgba(255, 255, 255, 0.04);
       
@@ -40,14 +73,14 @@
       --neu-inner-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.5), inset -3px -3px 6px rgba(255, 255, 255, 0.05);
       
       --neu-btn-bg: rgba(30, 37, 51, 0.65);
-      --neu-btn-shadow: 5px 5px 12px rgba(0, 0, 0, 0.35), -3px -3px 8px rgba(255, 255, 255, 0.05);
+      --neu-btn-shadow: 4px 4px 12px rgba(0, 0, 0, 0.35), -3px -3px 8px rgba(255, 255, 255, 0.05);
       
       --text-main: #f0f6fc;
       --accent: #60a5fa;
     }
 
-    /* 高清背景图与定焦平铺 */
-    html, body {
+    /* 1. 壁纸铺设与固定 */
+    html, body, html.entry-loading {
       min-height: 100vh;
       background: var(--bg-img) no-repeat center center fixed !important;
       background-size: cover !important;
@@ -55,13 +88,40 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* 预加载遮罩与平滑过渡 */
-    html.entry-loading {
-      background: var(--bg-img) no-repeat center center fixed !important;
-      background-size: cover !important;
+    /* 2. 彻底屏蔽气球漂浮动效 */
+    .balloon,
+    .balloons,
+    [class*="balloon"],
+    [class*="bubble"],
+    [id*="balloon"],
+    [id*="bubble"] {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
     }
 
-    /* 主卡片与容器：毛玻璃结合双向拟态外凸光影 */
+    /* 3. 彻底屏蔽鼠标拖尾与全屏特效画布 */
+    canvas[style*="fixed"],
+    canvas[style*="absolute"],
+    canvas#canvas,
+    body > canvas,
+    .cursor,
+    .cursor-trail,
+    .mouse-trail,
+    [class*="cursor"],
+    [class*="trail"],
+    [class*="particle"],
+    [id*="cursor"],
+    [id*="trail"],
+    [id*="particle"] {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    /* 4. 主卡片外凸新拟态 + 磨砂质感 */
     .card, 
     .v-card, 
     .el-card, 
@@ -79,7 +139,7 @@
       box-shadow: var(--neu-card-shadow) !important;
     }
 
-    /* 拖拽上传区域与各类输入框：深层凹陷拟态 (Inset) */
+    /* 5. 上传区与文本框内嵌凹陷 (Inset) */
     .dropzone,
     .el-upload-dragger,
     div[class*="dropzone"],
@@ -101,7 +161,7 @@
       outline: none !important;
     }
 
-    /* 物理机械按键：实体凸起与按压回弹手感 */
+    /* 6. 按键外凸与微动回弹反馈 */
     button,
     .btn,
     .el-button,
@@ -124,7 +184,7 @@
     .el-button:hover,
     .ant-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 7px 7px 16px rgba(31, 38, 135, 0.2), -5px -5px 12px rgba(255, 255, 255, 1) !important;
+      box-shadow: 6px 6px 16px rgba(31, 38, 135, 0.2), -5px -5px 12px rgba(255, 255, 255, 1) !important;
     }
 
     button:active,
@@ -136,10 +196,9 @@
       box-shadow: var(--neu-inner-shadow) !important;
     }
 
-    /* 文字对比度与光晕保障 */
     h1, h2, h3, h4, .title {
       color: var(--text-main) !important;
-      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.4);
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
     }
     html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark .title {
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
