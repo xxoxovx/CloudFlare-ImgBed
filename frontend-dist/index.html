@@ -13,37 +13,22 @@
         .catch(() => null);
       window.__siteEntryBootstrap = { config: cached.userConfig, configReady };
     })();</script><script data-cfasync="false">
-    /* 强力锁定背景图与拦截动画特效 */
+    /* 拦截动态特效并强制锁定背景图 */
     (() => {
-      const TARGET_BG = 'url("https://picui.ogmua.cn/s1/2026/10/29/6ae2ea5034071.webp")';
-      
-      const enforceBackground = () => {
-        [document.documentElement, document.body].forEach(el => {
-          if (el && el.style.backgroundImage !== TARGET_BG) {
-            el.style.setProperty('background-image', TARGET_BG, 'important');
-            el.style.setProperty('background-size', 'cover', 'important');
-            el.style.setProperty('background-position', 'center center', 'important');
-            el.style.setProperty('background-attachment', 'fixed', 'important');
-            el.style.setProperty('background-repeat', 'no-repeat', 'important');
-          }
-        });
-      };
-
       const isEffectNode = (node) => {
         if (!node || node.nodeType !== 1) return false;
         const id = node.id || '';
         const cls = typeof node.className === 'string' ? node.className : '';
-        const isTarget = /balloon|bubble|trail|cursor|particle/i.test(id + ' ' + cls);
+        const isTargetName = /balloon|bubble|trail|cursor|particle/i.test(id + ' ' + cls);
         const isCoverCanvas = node.tagName === 'CANVAS' && (
           node.style.position === 'fixed' || 
           node.style.position === 'absolute' || 
           node.parentNode === document.body
         );
-        return isTarget || isCoverCanvas;
+        return isTargetName || isCoverCanvas;
       };
 
       const purge = () => {
-        enforceBackground();
         document.querySelectorAll('canvas, [class*="balloon"], [class*="bubble"], [class*="trail"], [class*="particle"], [class*="cursor"]').forEach(el => {
           if (isEffectNode(el)) el.remove();
         });
@@ -51,34 +36,29 @@
 
       document.addEventListener('DOMContentLoaded', purge);
       window.addEventListener('load', purge);
-
-      // 实时监听 DOM 属性变动：若 Vue 异步更新了 style 属性，立即重写锁定
       const observer = new MutationObserver((mutations) => {
-        enforceBackground();
         for (const m of mutations) {
           for (const node of m.addedNodes) {
             if (isEffectNode(node)) node.remove();
           }
         }
       });
-
-      observer.observe(document.documentElement, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['style', 'class']
-      });
+      observer.observe(document.documentElement, { childList: true, subtree: true });
     })();
   </script><style>
+    /* 1. 核心配色与新拟态参数 */
     :root {
       --bg-img: url('https://picui.ogmua.cn/s1/2026/10/29/6ae2ea5034071.webp');
       --neu-card-bg: rgba(255, 255, 255, 0.45);
       --neu-card-border: rgba(255, 255, 255, 0.65);
-      --neu-card-shadow: 10px 10px 26px rgba(31, 38, 135, 0.15), -6px -6px 18px rgba(255, 255, 255, 0.85);
+      --neu-card-shadow: 10px 10px 26px rgba(31, 38, 135, 0.16), -6px -6px 18px rgba(255, 255, 255, 0.85);
+      
       --neu-inner-bg: rgba(255, 255, 255, 0.32);
       --neu-inner-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.08), inset -3px -3px 6px rgba(255, 255, 255, 0.85);
-      --neu-btn-bg: rgba(255, 255, 255, 0.6);
+      
+      --neu-btn-bg: rgba(255, 255, 255, 0.62);
       --neu-btn-shadow: 4px 4px 10px rgba(31, 38, 135, 0.14), -3px -3px 8px rgba(255, 255, 255, 0.9);
+      
       --text-main: #24292f;
       --accent: #2563eb;
     }
@@ -87,36 +67,55 @@
       --neu-card-bg: rgba(20, 24, 34, 0.6);
       --neu-card-border: rgba(255, 255, 255, 0.08);
       --neu-card-shadow: 12px 12px 28px rgba(0, 0, 0, 0.5), -5px -5px 16px rgba(255, 255, 255, 0.04);
+      
       --neu-inner-bg: rgba(12, 15, 22, 0.48);
       --neu-inner-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.55), inset -3px -3px 6px rgba(255, 255, 255, 0.05);
+      
       --neu-btn-bg: rgba(30, 36, 49, 0.7);
       --neu-btn-shadow: 4px 4px 10px rgba(0, 0, 0, 0.35), -3px -3px 8px rgba(255, 255, 255, 0.05);
+      
       --text-main: #f0f6fc;
       --accent: #60a5fa;
     }
 
-    /* 强制铺设并穿透底层所有包装容器 */
-    html, body, #app, html.entry-loading {
-      min-height: 100vh;
-      background: var(--bg-img) no-repeat center center fixed !important;
+    /* 2. 独立全屏底层壁纸（使用 ::before 铺底，彻底防止被 JS 篡改覆盖） */
+    html::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: var(--bg-img) no-repeat center center !important;
       background-size: cover !important;
+      z-index: -9999;
+      pointer-events: none;
+    }
+
+    html, body, html.entry-loading {
+      min-height: 100vh;
+      background: transparent !important;
       color: var(--text-main) !important;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* 彻底清除框架内的纯色背景层 */
+    /* 3. 彻底穿透 Vue 内部原生的独立遮罩图层与雪景图 */
+    #app,
+    .bg-container,
+    .wallpaper-container,
     .el-container,
     .el-main,
     .layout,
     .admin-layout,
     .system-config-container,
+    div[class*="background"],
+    div[class*="wallpaper"],
     div[class*="layout"],
-    div[class*="main-content"],
-    div[class*="page-container"] {
+    div[class*="main-content"] {
       background: transparent !important;
     }
 
-    /* 磨砂新拟态卡片 */
+    /* 4. 前台与后台卡片：磨砂新拟态 (凸起) */
     .upload-container,
     .upload-card,
     .status-card,
@@ -136,7 +135,7 @@
       box-shadow: var(--neu-card-shadow) !important;
     }
 
-    /* 侧边栏与菜单项 */
+    /* 5. 后台侧边栏与导航 */
     .el-aside,
     .sidebar,
     div[class*="aside"],
@@ -158,7 +157,7 @@
       color: var(--accent) !important;
     }
 
-    /* 凹陷输入框/上传拖拽区 */
+    /* 6. 上传拖拽框、文本输入框 (内嵌 Inset) */
     .dropzone,
     .el-upload-dragger,
     div[class*="drop-box"],
@@ -175,9 +174,10 @@
       border-radius: 16px !important;
       box-shadow: var(--neu-inner-shadow) !important;
       color: var(--text-main) !important;
+      outline: none !important;
     }
 
-    /* 凸起交互按钮 */
+    /* 7. 按钮：外凸按键与回弹触感 */
     button, .btn, .el-button, div[role="button"]:not(.entry-loader-duck) {
       background: var(--neu-btn-bg) !important;
       backdrop-filter: blur(14px) !important;
@@ -193,7 +193,7 @@
       box-shadow: var(--neu-inner-shadow) !important;
     }
 
-    /* 彻底禁用特效画布与气球 */
+    /* 8. 彻底屏蔽气球与特效画布 */
     .balloon, .balloons, [class*="balloon"], [class*="bubble"],
     canvas[style*="fixed"], canvas[style*="absolute"], canvas#canvas, body > canvas,
     .cursor, .cursor-trail, [class*="cursor"], [class*="trail"], [class*="particle"] {
